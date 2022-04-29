@@ -1,4 +1,8 @@
 package jiandan;
+
+import java.util.LinkedList;
+import java.util.List;
+
 /**
 描述
         判断给定的链表中是否有环。如果有环则返回true，否则返回false。
@@ -17,6 +21,17 @@ class ListNode {
     ListNode(int x){
         val = x;
         next = null;
+    }
+
+    Integer[] toArray(){
+        ListNode indx = this;
+        List<Integer> res = new LinkedList<Integer>();
+        while(indx != null){
+            res.add(indx.val);
+            indx = indx.next;
+        }
+
+        return res.toArray(new Integer[] {});
     }
 }
 
