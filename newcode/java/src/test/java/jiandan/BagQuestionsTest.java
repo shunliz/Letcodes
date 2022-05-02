@@ -82,4 +82,17 @@ class BagQuestionsTest {
         int capacity = 5;
         assertEquals(8, test.hybidBagQuestions(weights,values,nums,5,4));
     }
+
+    @Test
+    void twoDemensionBag() {
+        int n = 4;
+        int v = 5;
+        int m = 6;
+
+        int[] vi = {4,1,2,3,4};
+        int[] mi = {5,2,4,4,5};
+        int[] wi = {6,3,4,5,6};
+
+        assertEquals(10, test.twoDemensionBag(vi,mi,wi,n,v,m));
+    }
 }

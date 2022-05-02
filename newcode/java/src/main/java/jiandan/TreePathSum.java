@@ -50,6 +50,8 @@ class TreeNode {
             if(nd.left !=null){
                 q.offer(nd.left);
                 arrayList.add(nd.left.val);
+            }else if(nd.right !=null){
+                arrayList.add(Integer.MIN_VALUE);
             }
             if(nd.right !=null){
                 q.offer(nd.right);
