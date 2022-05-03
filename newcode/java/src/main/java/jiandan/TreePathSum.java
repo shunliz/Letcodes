@@ -75,6 +75,10 @@ class TreeNode {
         int indx = 1;
         while(!quque.isEmpty()){
             TreeNode nd = quque.poll();
+            if(nd == null){
+                continue;
+            }
+            TreeNode temp2 = null;
             TreeNode temp = null;
             if(indx<arr.length){
                 int lval = arr[indx++];
@@ -84,7 +88,6 @@ class TreeNode {
                 nd.left = temp;
                 quque.offer(temp);
             }
-            TreeNode temp2 = null;
             if(indx<arr.length){
                 int rval = arr[indx++];
                 if(rval != Integer.MIN_VALUE){
@@ -93,6 +96,7 @@ class TreeNode {
                 nd.right = temp2;
                 quque.offer(temp2);
             }
+
         }
         return root;
     }
