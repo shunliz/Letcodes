@@ -1,15 +1,29 @@
 package jiandan;
 
-import sun.nio.cs.ext.MacThai;
-
-import java.security.Signature;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.DoublePredicate;
-import java.util.jar.JarEntry;
 
 public class BagQuestions {
+
+    /**
+     * 01背包我的答案
+     * @param V
+     * @param n
+     * @param vw
+     * @return
+     */
+    public int knapsack (int V, int n, int[][] vw) {
+        // write code here
+        int[] dp = new int[V+1];
+
+        for(int i=1;i<=n;i++){
+            for(int j=V;j>=vw[i-1][0];j--){
+                dp[j] = Math.max(dp[j], dp[j-vw[i-1][0]]+vw[i-1][1]);
+            }
+        }
+        return dp[V];
+    }
 
     /**
      * 给定n种物品和一个容量为C的背包，物品i的重量是wi，其价值为vi。问：应该如何选择装入背包的物品，使得装入背包中的物品的总价值最大？

@@ -95,4 +95,20 @@ class BagQuestionsTest {
 
         assertEquals(10, test.twoDemensionBag(vi,mi,wi,n,v,m));
     }
+
+    @Test
+    void knapsack() {
+        int v = 10;
+        int n =2;
+        int[][] vw = {{1,3},{9,8}};
+        assertEquals(11,test.knapsack(v,n,vw));
+    }
+
+    @Test
+    void knapsack2() {
+        int v = 10;
+        int n =2;
+        int[][] vw = {{1,3},{10,4}};
+        assertEquals(4,test.knapsack(v,n,vw));
+    }
 }
