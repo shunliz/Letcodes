@@ -27,7 +27,6 @@ import java.util.Queue;
  * https://www.nowcoder.com/practice/508378c0823c423baa723ce448cbfd0c?tpId=117&tags=&title=&difficulty=2&judgeStatus=0&rp=1&sourceUrl=%2Fexam%2Foj%3Fdifficulty%3D2%26page%3D1%26pageSize%3D50%26search%3D%26tab%3D%25E7%25AE%2597%25E6%25B3%2595%25E7%25AF%2587%26topicId%3D117
  */
 
-
 class TreeNode {
     int val = 0;
     TreeNode left = null;
