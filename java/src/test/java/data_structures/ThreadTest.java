@@ -1,6 +1,7 @@
 package data_structures;
 
 
+import org.apache.commons.lang3.time.StopWatch;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -255,7 +256,8 @@ public class ThreadTest {
                     System.out.println(workerId + " is working...");
                     Thread.sleep(sleepTime);
                     concurrentHashMap.put(workerId, sleepTime);
-                    barrier.await();
+                    barrier.await();//在业务行之前，则是等待所有线程都准备好，一块开始。
+                                   // 在业务执行之后，则是等待所有线程执行结束后，一块结束执行。
                     System.out.println(workerId + "with time " + sleepTime + " finish");
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -692,6 +694,319 @@ public class ThreadTest {
         users.stream().filter(user ->{return user.age>23;})
                 .map(u->{return u.name.toUpperCase();})
                 .forEach(System.out::println);
+    }
+
+    @Test
+    void completableFutureTest() throws ExecutionException, InterruptedException {
+        ExecutorService executor = Executors.newFixedThreadPool(5);
+        ConcurrentLinkedQueue queue = new ConcurrentLinkedQueue();
+        CompletableFuture<String> cf1 = CompletableFuture.supplyAsync(() -> {
+            try {
+                Thread.sleep(new Random().nextInt(1000));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("执行step 1");
+            queue.add("result1");
+            return "result1";
+        }, executor);
+        CompletableFuture<String> cf2 = CompletableFuture.supplyAsync(() -> {
+            try {
+                Thread.sleep(new Random().nextInt(1000));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("执行step 2");
+            queue.add("result2");
+            return "result2";
+        });
+
+        CompletableFuture<String> cf3 = cf1.thenApply(result1 -> {
+            try {
+                Thread.sleep(new Random().nextInt(1000));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("执行step 3");
+            queue.add("result1->3");
+            return result1;
+        });
+        CompletableFuture<String> cf5 = cf2.thenApply(result2 -> {
+            try {
+                Thread.sleep(new Random().nextInt(1000));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("执行step 5");
+            queue.add("result2->5");
+            return result2;
+        });
+
+        CompletableFuture<String> cf4 = cf1.thenCombine(cf2, (result1, result2) -> {
+            try {
+                Thread.sleep(new Random().nextInt(1000));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("执行step 4");
+            queue.add("result12->4");
+            return result1+result2;
+        });
+
+        CompletableFuture<Void> cf6 = CompletableFuture.allOf(cf3, cf4, cf5);
+        CompletableFuture<String> result = cf6.thenApply(v -> {
+            //这里的join并不会阻塞，因为传给thenApply的函数是在CF3、CF4、CF5全部完成时，才会执行 。
+            String result3 = cf3.join();
+            String result4 = cf4.join();
+            String result5 = cf5.join();
+            queue.add("result345->6");
+            //根据result3、result4、result5组装最终result;
+            return result3+result4+result5;
+        });
+        String res = result.get();
+        System.out.println(res);
+    }
+
+    @Test
+    void completeableDeadLock() throws InterruptedException {
+        CyclicBarrier barrier = new CyclicBarrier(3);
+        ThreadPoolExecutor threadPool1 = new ThreadPoolExecutor(2, 2, 0L, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(100));
+        Thread t1 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    barrier.await();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (BrokenBarrierException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    Thread.sleep(new Random().nextInt(1000));
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                doGet(threadPool1);
+            }
+        });
+        Thread t2 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    barrier.await();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (BrokenBarrierException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    Thread.sleep(new Random().nextInt(1000));
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                doGet(threadPool1);
+            }
+        });
+        Thread t3 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    barrier.await();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (BrokenBarrierException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    Thread.sleep(new Random().nextInt(1000));
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                doGet(threadPool1);
+            }
+        });
+
+        t1.start();
+        t2.start();
+        t3.start();
+
+        t1.join();
+        t2.join();
+        t3.join();
+    }
+
+    private Object doGet(ThreadPoolExecutor threadPool1) {
+
+        CompletableFuture cf1 = CompletableFuture.supplyAsync(() -> {
+            //do sth
+            return CompletableFuture.supplyAsync(() -> {
+                System.out.println("child");
+                return "child";
+            }, threadPool1).join();//子任务
+        }, threadPool1);
+        return cf1.join();
+    }
+
+
+    @Test
+    void testcounddownasCB() throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(5);
+        Thread[] ths = new Thread[5];
+        for(int i=0;i<5;i++){
+            ths[i] = new Thread(()->{
+                latch.countDown();
+                try {
+                    Thread.sleep(new Random().nextInt(1000));
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.println(Thread.currentThread().getName()+"started");
+            });
+            ths[i].start();
+            //ths[i].join();
+        }
+        latch.await();
+        System.out.println("Main thread started");
+    }
+
+    @Test
+    void countdownstartalgin() throws InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+
+        Thread 大乔 = new Thread(() -> waitToFight(countDownLatch));
+        Thread 兰陵王 = new Thread(() -> waitToFight(countDownLatch));
+        Thread 安其拉 = new Thread(() -> waitToFight(countDownLatch));
+        Thread 哪吒 = new Thread(() -> waitToFight(countDownLatch));
+        Thread 铠 = new Thread(() -> waitToFight(countDownLatch));
+
+        大乔.start();
+        兰陵王.start();
+        安其拉.start();
+        哪吒.start();
+        铠.start();
+        Thread.sleep(1000);
+        countDownLatch.countDown();
+        System.out.println("敌方还有5秒达到战场，全军出击！");
+
+    }
+
+    private void waitToFight(CountDownLatch countDownLatch) {
+        try {
+            countDownLatch.await(); // 在此等待信号再继续
+            System.out.println("收到，发起进攻！");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    void countdownalldonestart() throws InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(5);
+
+        Thread 大乔 = new Thread(countDownLatch::countDown);
+        Thread 兰陵王 = new Thread(countDownLatch::countDown);
+        Thread 安其拉 = new Thread(countDownLatch::countDown);
+        Thread 哪吒 = new Thread(countDownLatch::countDown);
+        Thread 铠 = new Thread(() -> {
+            try {
+                // 稍等，上个卫生间，马上到...
+                Thread.sleep(1500);
+                countDownLatch.countDown();
+            } catch (InterruptedException ignored) {}
+        });
+
+        大乔.start();
+        兰陵王.start();
+        安其拉.start();
+        哪吒.start();
+        铠.start();
+        countDownLatch.await();
+        System.out.println("所有玩家已经就位！");
+
+    }
+
+    @Test
+    void forkjointest() throws InterruptedException {
+        class CountTask extends RecursiveTask<Integer> {
+            private static final int THRESHOLD = 16; // 阈值
+            private int start;
+            private int end;
+
+            public CountTask(int start, int end) {
+                this.start = start;
+                this.end = end;
+            }
+
+            @Override
+            protected Integer compute() {
+                int sum = 0;
+                // 如果任务足够小就计算任务
+                boolean canCompute = (end - start) <= THRESHOLD;
+                if (canCompute) {
+                    for (int i = start; i <= end; i++) {
+                        sum += i;
+                    }
+                } else {
+                    // 如果任务大于阈值，就分裂成两个子任务计算
+                    int middle = (start + end) / 2;
+                    CountTask leftTask = new CountTask(start, middle);
+                    CountTask rightTask = new CountTask(middle + 1, end);
+                    // 执行子任务
+                    leftTask.fork();
+                    rightTask.fork(); // 等待子任务执行完，并得到其结果
+                    int leftResult = leftTask.join();
+                    int rightResult = rightTask.join(); // 合并子任务
+                    sum = leftResult + rightResult;
+                }
+                try {
+                    Thread.sleep(new Random().nextInt(10));
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                return sum;
+            }
+        }
+
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
+        ForkJoinPool forkJoinPool = new ForkJoinPool(); // 生成一个计算任务，负责计算1+2+3+4
+        CountTask task = new CountTask(1, 1000); // 执行一个任务
+        Future<Integer> result = forkJoinPool.submit(task);
+        try {
+            System.out.println(result.get());
+        } catch (InterruptedException e) {
+        } catch (ExecutionException e) {
+        }
+        stopWatch.stop();
+        System.out.println(stopWatch.getNanoTime());
+
+        StopWatch stopWatch2 = new StopWatch();
+        stopWatch2.start();
+        int sum = 0;
+        for(int i=0;i<1000;i++){
+            sum +=i;
+            //如果任务处理时间很短，比如简单的整数自加，ForkJoin并不比单线程循环快，因为存在线程切换开销。
+            Thread.sleep(new Random().nextInt(10));
+        }
+        stopWatch2.stop();
+        System.out.println(stopWatch2.getNanoTime());
+
+    }
+
+    @Test
+    void testinheritableTHL(){
+        final ThreadLocal threadLocal = new InheritableThreadLocal();
+        // 主线程
+        threadLocal.set("不擅技术");
+        //子线程
+        Thread t = new Thread() {
+            @Override
+            public void run() {
+                super.run();
+                System.out.println("鄙人三某 ，" + threadLocal.get());
+            }
+        };
+        t.start();
     }
 
 }

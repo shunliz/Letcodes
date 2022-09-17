@@ -1,16 +1,20 @@
 package misctests;
+/*
+import com.sun.org.apache.xml.internal.utils.XML11Char;
+import sun.plugin.security.JDK11ClassFileTransformer;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.SynchronousQueue;
 
 public class ReorderingDemo {
-
     static int x = 0, y = 0, a = 0, b = 0;
 
-    public static void main(String[] args) throws Exception {
 
-        for (int i = 0; i < 100; i++) {
+    public static void main(String[] args) throws Exception {
+        for (int i = 0; i < 10000; i++) {
             x=y=a=b=0;
             Thread one = new Thread() {
                 public void run() {
@@ -31,8 +35,7 @@ public class ReorderingDemo {
             System.out.println(x + " " + y);
         }
 
-        SynchronousQueue<String> sq = new SynchronousQueue<String>(false);
-
     }
 
 }
+*/

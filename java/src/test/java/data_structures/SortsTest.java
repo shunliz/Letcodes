@@ -11,6 +11,44 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class SortsTest {
     Person[] ps = null;
+
+    @Test
+    void shellSort() {
+        int[] arr = {3,6,8,2,9};
+        Sorts.shellSort(arr);
+        assertArrayEquals(new int[]{2,3,6,8,9}, arr);
+    }
+
+    @Test
+    void nonRec_quickSort() {
+        int[] arr = {3,6,8,2,9};
+        Sorts.nonRec_quickSort(arr,0,4);
+        assertArrayEquals(new int[]{2,3,6,8,9}, arr);
+    }
+
+    @Test
+    void countingSort() {
+        int[] arr = {3,2,8,9,3,6,8,2,9};
+        arr=Sorts.countingSort(arr);
+        assertArrayEquals(new int[]{2,2,3,3,6,8,8,9,9}, arr);
+
+    }
+
+    @Test
+    void mycountingSort() {
+        int[] arr = {3,2,8,9,3,6,8,2,9};
+        arr=Sorts.mycountingSort(arr);
+        assertArrayEquals(new int[]{2,2,3,3,6,8,8,9,9}, arr);
+    }
+
+    @Test
+    void radixSort() {
+        int[] arr = {34,25,81,94,33,67,82,23,99};
+        arr=Sorts.radixSort(arr);
+        assertArrayEquals(new int[]{23,25,33,34,67,81,82,94,99}, arr);
+
+    }
+
     class Person implements Comparable {
         String name;
         int age;
