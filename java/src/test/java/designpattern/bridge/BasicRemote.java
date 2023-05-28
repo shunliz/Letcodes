@@ -1,7 +1,14 @@
 package designpattern.bridge;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.CopyOnWriteArraySet;
+
 public class BasicRemote implements Remote {
     protected Device device;
+
+    private Set<String> string2 = new CopyOnWriteArraySet<>();
 
     public BasicRemote() {}
 
@@ -11,6 +18,7 @@ public class BasicRemote implements Remote {
 
     @Override
     public void power() {
+        string2.add("tt");
         System.out.println("Remote: power toggle");
         if (device.isEnabled()) {
             device.disable();
